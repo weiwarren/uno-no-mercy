@@ -1,18 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useUser';
 import { LoginForm } from '@/components/lobby/LoginForm';
 import { GameLobby } from '@/components/lobby/GameLobby';
 
+const LAST_ROOM_KEY = 'uno-last-room';
+
 export default function Home() {
   const router = useRouter();
   const { user, isLoading, isLoggedIn, logout } = useUser();
   const [mounted, setMounted] = useState(false);
+  const [lastRoomCode, setLastRoomCode] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    // Load last room code from localStorage
+    const savedRoom = localStorage.getItem(LAST_ROOM_KEY);
+    if (savedRoom) {
+      setLastRoomCode(savedRoom);
+    }
   }, []);
 
   if (!mounted || isLoading) {
@@ -25,6 +33,7 @@ export default function Home() {
 
   const handleCreateGame = (isSinglePlayer: boolean) => {
     if (isSinglePlayer) {
+      localStorage.removeItem(LAST_ROOM_KEY);
       router.push('/game?mode=single');
     } else {
       router.push('/game?mode=host');
@@ -32,7 +41,15 @@ export default function Home() {
   };
 
   const handleJoinGame = (roomCode: string) => {
+    // Save room code for potential rejoin
+    localStorage.setItem(LAST_ROOM_KEY, roomCode);
+    setLastRoomCode(roomCode);
     router.push(`/game?mode=join&room=${roomCode}`);
+  };
+
+  const handleClearLastGame = () => {
+    localStorage.removeItem(LAST_ROOM_KEY);
+    setLastRoomCode(null);
   };
 
   return (
@@ -58,6 +75,8 @@ export default function Home() {
           onCreateGame={handleCreateGame}
           onJoinGame={handleJoinGame}
           onLogout={logout}
+          lastRoomCode={lastRoomCode}
+          onClearLastGame={handleClearLastGame}
         />
       )}
     </main>

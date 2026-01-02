@@ -70,6 +70,13 @@ function GameContent() {
     }
   }, [userLoading, isLoggedIn, router]);
 
+  // Save room code for rejoin (for multiplayer games)
+  useEffect(() => {
+    if (gameState?.roomCode && !isSinglePlayer) {
+      localStorage.setItem('uno-last-room', gameState.roomCode);
+    }
+  }, [gameState?.roomCode, isSinglePlayer]);
+
   const handleAddAI = useCallback(() => {
     // This would need to be implemented in the hook
     console.log('Add AI player');

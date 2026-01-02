@@ -10,9 +10,11 @@ interface GameLobbyProps {
   onCreateGame: (isSinglePlayer: boolean) => void;
   onJoinGame: (roomCode: string) => void;
   onLogout: () => void;
+  lastRoomCode?: string | null;
+  onClearLastGame?: () => void;
 }
 
-export function GameLobby({ username, onCreateGame, onJoinGame, onLogout }: GameLobbyProps) {
+export function GameLobby({ username, onCreateGame, onJoinGame, onLogout, lastRoomCode, onClearLastGame }: GameLobbyProps) {
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'play' | 'join'>('play');
@@ -69,6 +71,31 @@ export function GameLobby({ username, onCreateGame, onJoinGame, onLogout }: Game
       <div className="space-y-4">
         {activeTab === 'play' && (
           <>
+            {/* Rejoin Last Game */}
+            {lastRoomCode && (
+              <div className="relative">
+                <button
+                  onClick={() => onJoinGame(lastRoomCode)}
+                  className="w-full p-6 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl text-left hover:from-yellow-500 hover:to-orange-500 transition-all transform hover:scale-[1.02] shadow-lg"
+                >
+                  <h3 className="text-xl font-bold text-white mb-1">Rejoin Game</h3>
+                  <p className="text-yellow-100 text-sm">Room: <span className="font-mono font-bold">{lastRoomCode}</span></p>
+                </button>
+                {onClearLastGame && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClearLastGame();
+                    }}
+                    className="absolute top-2 right-2 w-6 h-6 bg-black/30 hover:bg-black/50 rounded-full text-white/70 hover:text-white flex items-center justify-center text-sm"
+                    title="Clear"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Single Player */}
             <button
               onClick={() => onCreateGame(true)}

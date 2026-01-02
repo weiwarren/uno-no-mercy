@@ -114,19 +114,31 @@ export function useGameState({
 
           channelRef.current = channel;
         } else if (roomCode) {
-          // Join existing game
+          // Join or rejoin existing game
           const supabase = getSupabaseClient();
 
           // Use the auth user ID directly
           setActivePlayerId(playerId);
 
           const dbGame = await getGameByRoomCode(supabase, roomCode);
-
           let state = dbGame.game_state as GameState;
-          state = addPlayer(state, playerId, playerName);
 
-          await updateGameState(supabase, dbGame.id, state);
-          setGameState(state);
+          // Check if player is already in the game (rejoin scenario)
+          const existingPlayer = state.players.find(p => p.id === playerId);
+
+          if (existingPlayer) {
+            // Player is rejoining - just use current state
+            console.log('Rejoining game as:', existingPlayer.name);
+            setGameState(state);
+          } else if (state.status === 'waiting') {
+            // New player joining a waiting game
+            state = addPlayer(state, playerId, playerName);
+            await updateGameState(supabase, dbGame.id, state);
+            setGameState(state);
+          } else {
+            // Game already started and player wasn't in it
+            throw new Error('Cannot join a game that has already started');
+          }
 
           // Set up real-time subscription
           const channel = createGameChannel(supabase, dbGame.id);
