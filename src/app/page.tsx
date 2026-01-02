@@ -8,7 +8,7 @@ import { GameLobby } from '@/components/lobby/GameLobby';
 
 export default function Home() {
   const router = useRouter();
-  const { user, isLoading, isLoggedIn, login, register, logout } = useUser();
+  const { user, isLoading, isLoggedIn, logout } = useUser();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function Home() {
           </div>
 
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 shadow-xl">
-            <LoginForm onLogin={login} onRegister={register} />
+            <LoginForm />
           </div>
         </div>
       ) : (
