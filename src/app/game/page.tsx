@@ -96,18 +96,6 @@ function GameContent() {
     }
   }, [isSinglePlayer, router]);
 
-  // Loading state
-  if (userLoading || gameLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-400">Loading game...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Error state (only for initialization errors)
   if (initError) {
     return (
@@ -125,11 +113,14 @@ function GameContent() {
     );
   }
 
-  // No game state yet
-  if (!gameState) {
+  // Combined loading state - wait for everything to be ready
+  if (userLoading || gameLoading || !user || !gameState) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-400">Initializing game...</p>
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-gray-400">Loading game...</p>
+        </div>
       </div>
     );
   }

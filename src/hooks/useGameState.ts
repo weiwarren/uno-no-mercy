@@ -49,6 +49,13 @@ export function useGameState({
   const [activePlayerId, setActivePlayerId] = useState<string>(playerId);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const aiTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const onErrorRef = useRef(onError);
+  const initializedRef = useRef(false);
+
+  // Keep onError ref up to date
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   // Initialize or join game
   useEffect(() => {
@@ -56,6 +63,12 @@ export function useGameState({
     if (!playerId) {
       return;
     }
+
+    // Prevent re-initialization
+    if (initializedRef.current) {
+      return;
+    }
+    initializedRef.current = true;
 
     async function initGame() {
       try {
@@ -176,7 +189,7 @@ export function useGameState({
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to initialize game';
         setError(message);
-        onError?.(message);
+        onErrorRef.current?.(message);
       } finally {
         setIsLoading(false);
       }
@@ -192,7 +205,7 @@ export function useGameState({
         clearTimeout(aiTimeoutRef.current);
       }
     };
-  }, [playerId, playerName, isHost, roomCode, isSinglePlayer, onError]);
+  }, [playerId, playerName, isHost, roomCode, isSinglePlayer]);
 
   // Handle AI turns
   useEffect(() => {
@@ -311,7 +324,7 @@ export function useGameState({
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to play card';
         setError(message);
-        onError?.(message);
+        onErrorRef.current?.(message);
       }
     },
     [gameState, activePlayerId, broadcastUpdate, onError]
@@ -328,7 +341,7 @@ export function useGameState({
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to play cards';
         setError(message);
-        onError?.(message);
+        onErrorRef.current?.(message);
       }
     },
     [gameState, activePlayerId, broadcastUpdate, onError]
@@ -365,7 +378,7 @@ export function useGameState({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to draw card';
       setError(message);
-      onError?.(message);
+      onErrorRef.current?.(message);
     }
   }, [gameState, activePlayerId, broadcastUpdate, onError]);
 
@@ -379,7 +392,7 @@ export function useGameState({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to call UNO';
       setError(message);
-      onError?.(message);
+      onErrorRef.current?.(message);
     }
   }, [gameState, activePlayerId, broadcastUpdate, onError]);
 
@@ -394,7 +407,7 @@ export function useGameState({
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to challenge UNO';
         setError(message);
-        onError?.(message);
+        onErrorRef.current?.(message);
       }
     },
     [gameState, activePlayerId, broadcastUpdate, onError]
@@ -411,7 +424,7 @@ export function useGameState({
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to discard all';
         setError(message);
-        onError?.(message);
+        onErrorRef.current?.(message);
       }
     },
     [gameState, activePlayerId, broadcastUpdate, onError]
@@ -427,7 +440,7 @@ export function useGameState({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to start game';
       setError(message);
-      onError?.(message);
+      onErrorRef.current?.(message);
     }
   }, [gameState, broadcastUpdate, onError]);
 
