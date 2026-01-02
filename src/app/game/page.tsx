@@ -17,10 +17,19 @@ function GameContent() {
   const mode = searchParams.get('mode') || 'single';
   const roomCode = searchParams.get('room') || undefined;
 
-  const [error, setError] = useState<string | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const isSinglePlayer = mode === 'single';
   const isHost = mode === 'host' || mode === 'single';
+
+  // Show toast for 3 seconds then hide
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   const {
     gameState,
@@ -36,6 +45,7 @@ function GameContent() {
     handleCallUno,
     handleChallengeUno,
     handleStartGame,
+    error: gameError,
   } = useGameState({
     playerId: user?.id || '',
     playerName: user?.username || 'Player',
@@ -43,7 +53,14 @@ function GameContent() {
     roomCode,
     isSinglePlayer,
     aiDifficulty: 'medium',
-    onError: setError,
+    onError: (msg) => {
+      // Show game action errors as toast, not full page error
+      if (gameState) {
+        setToast(msg);
+      } else {
+        setInitError(msg);
+      }
+    },
   });
 
   // Redirect if not logged in
@@ -84,12 +101,12 @@ function GameContent() {
     );
   }
 
-  // Error state
-  if (error) {
+  // Error state (only for initialization errors)
+  if (initError) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="text-red-500 text-xl mb-4">{error}</p>
+          <p className="text-red-500 text-xl mb-4">{initError}</p>
           <button
             onClick={() => router.push('/')}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg"
@@ -151,7 +168,7 @@ function GameContent() {
 
   // Active game
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col relative">
       <GameBoard
         gameState={gameState}
         currentPlayerId={activePlayerId}
@@ -163,6 +180,14 @@ function GameContent() {
         onCallUno={handleCallUno}
         onChallengeUno={handleChallengeUno}
       />
+      {/* Toast notification for game warnings */}
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="bg-yellow-500 text-black font-semibold px-6 py-3 rounded-lg shadow-lg">
+            {toast}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
