@@ -72,5 +72,27 @@ CREATE TRIGGER update_games_updated_at
 -- Enable Realtime for games table
 ALTER PUBLICATION supabase_realtime ADD TABLE games;
 
+-- Function to handle new user signup from Supabase Auth
+-- This creates a corresponding record in public.users
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, username)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1))
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    username = COALESCE(EXCLUDED.username, users.username);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to auto-create public.users record when auth.users is created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 -- Clean up old games (run this periodically or as a cron job)
 -- DELETE FROM games WHERE created_at < NOW() - INTERVAL '24 hours';
